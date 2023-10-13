@@ -106,7 +106,7 @@ rule annotate_variants:
     input:
         calls="05_calls_filt/{sample}.filtered.vcf",  # .vcf, .vcf.gz or .bcf
         cache="resources/vep/cache",  # can be omitted if fasta and gff are specified
-        plugins="resources/vep/plugins",
+        #plugins="resources/vep/plugins",
     output:
         calls="06_calls_annot/{sample}.annotated.vcf.gz",  # .vcf, .vcf.gz or .bcf
         stats="06_calls_annot/{sample}.variants.html",
