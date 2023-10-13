@@ -1,4 +1,4 @@
 samples:
-  sampleA
-  sampleB
-genome: ref/genome
+  - DGRP057_SRR933581
+  - DGRP057_SRR933581
+genome: ref/genome.fa

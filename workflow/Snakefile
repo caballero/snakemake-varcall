@@ -8,11 +8,11 @@ rule all:
 
 rule fastp_pre:
     input:
-        sample = [ "data/{sample}_1.fastq.gz", "data/{sample}_2.fastq.gz" ]
+        sample=[ "data/{sample}_1.fastq.gz", "data/{sample}_2.fastq.gz" ]
     output:
-        trimmed = [ "01_preprocessing/{sample}_1.fastq.gz", "01_preprocessing/{sample}_2.fastq.gz" ],
-        html = "01_preprocessing/{sample}_report.html",
-        json = "01_preprocessing/{sample}_report.json"
+        trimmed=[ "01_preprocessing/{sample}_1.fastq.gz", "01_preprocessing/{sample}_2.fastq.gz" ],
+        html="01_preprocessing/{sample}_report.html",
+        json="01_preprocessing/{sample}_report.json"
     threads: 2
     log:
         "logs/fastp/{sample}.log"
@@ -22,7 +22,7 @@ rule fastp_pre:
 rule bwa_mem:
     input:
         reads=["01_preprocessing/{sample}_1.fastq.gz", "01_preprocessing/{sample}_2.fastq.gz"],
-        idx=multiext(config["genome"], ".amb", ".ann", ".bwt", ".pac", ".sa"),
+        idx=multiext(config["genome"], ".amb", ".ann", ".bwt", ".pac", ".sa")
     output:
         "02_mapped/{sample}.bam"
     log:
@@ -77,11 +77,11 @@ rule freebayes:
     input:
         alns="02_mapped/{sample}.rmdup.bam",
         idxs="02_mapped/{sample}.rmdup.bam.bai",
-        ref=config["genome"]+".fa",
+        ref=config["genome"]
     output:
-        vcf = "03_calls/{sample}.vcf",
+        vcf = "03_calls/{sample}.vcf"
     log:
-        "logs/freebayes/{sample}.log",
+        "logs/freebayes/{sample}.log"
     params:
         normalize="-a",
     threads: 8
