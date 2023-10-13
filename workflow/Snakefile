@@ -1,15 +1,20 @@
+
+samples = ["sampleA", "sampleB"]
+genome = ""
+
 rule all:
     input:
-        annotate_variants()
+        expand("03_calls/{sample}.annotated.vcf.gz", sample=samples), 
+        expand("03_calls/{sample}.variants.html", sample=samples)
 
 rule fastp_pre:
     input:
         sample = [ "data/{sample}_1.fastq.gz", "data/{sample}_2.fastq.gz" ]
     output:
-        trimmed = [ "01_preprocessing/{sample}_1.fastq.gz", "01_preprocessing/{sample}_2.fastq.gz" ]
-        html = "01_preprocessing/{sample}_report.html"
+        trimmed = [ "01_preprocessing/{sample}_1.fastq.gz", "01_preprocessing/{sample}_2.fastq.gz" ],
+        html = "01_preprocessing/{sample}_report.html",
         json = "01_preprocessing/{sample}_report.json"
-    threads = 2
+    threads: 2
     log:
         "logs/fastp/{sample}.log"
     wrapper:
@@ -18,7 +23,7 @@ rule fastp_pre:
 rule bwa_mem:
     input:
         reads=["01_preprocessing/{sample}_1.fastq.gz", "01_preprocessing/{sample}_2.fastq.gz"],
-        idx=multiext("genome", ".amb", ".ann", ".bwt", ".pac", ".sa"),
+        idx=multiext("{genome}", ".amb", ".ann", ".bwt", ".pac", ".sa"),
     output:
         "02_mapped/{sample}.bam"
     log:
@@ -114,3 +119,5 @@ rule annotate_variants:
     threads: 4
     wrapper:
         "v2.6.0/bio/vep/annotate"
+
+
