@@ -3,8 +3,8 @@ configfile: "config.yaml"
 
 rule all:
     input:
-        expand("03_calls/{sample}.annotated.vcf.gz", sample=config["samples"]), 
-        expand("03_calls/{sample}.variants.html", sample=config["samples"])
+        expand("06_calls_annot/{sample}.annotated.vcf.gz", sample=config["samples"]), 
+        expand("06_calls_annot/{sample}.variants.html", sample=config["samples"])
 
 rule fastp_pre:
     input:
@@ -52,7 +52,7 @@ rule sambamba_markdup:
     input:
         "02_mapped/{sample}.bam"
     output:
-        "02_mapped/{sample}.rmdup.bam"
+        "03_mapped_rmdup/{sample}.rmdup.bam"
     params:
         extra="-r"  # optional parameters
     log:
@@ -63,9 +63,9 @@ rule sambamba_markdup:
 
 rule samtools_index_rmdup:
     input:
-        "02_mapped/{sample}.rmdup.bam"
+        "03_mapped_rmdup/{sample}.rmdup.bam"
     output:
-        "02_mapped/{sample}.rmdup.bam.bai"
+        "03_mapped_rmdup/{sample}.rmdup.bam.bai"
     log:
         "logs/samtools_index/{sample}.rmdup.log"
     params:
@@ -75,11 +75,11 @@ rule samtools_index_rmdup:
 
 rule freebayes:
     input:
-        alns="02_mapped/{sample}.rmdup.bam",
-        idxs="02_mapped/{sample}.rmdup.bam.bai",
+        alns="03_mapped_rmdup/{sample}.rmdup.bam",
+        idxs="03_mapped_rmdup/{sample}.rmdup.bam.bai",
         ref=config["genome"]
     output:
-        vcf = "03_calls/{sample}.vcf"
+        vcf = "04_calls/{sample}.vcf"
     log:
         "logs/freebayes/{sample}.log"
     params:
@@ -92,9 +92,9 @@ rule freebayes:
 
 rule filter_vcf:
     input:
-        "03_calls/{sample}.vcf"
+        "04_calls/{sample}.vcf"
     output:
-        "03_calls/{sample}.filtered.vcf"
+        "05_calls_filt/{sample}.filtered.vcf"
     params:
         extra="--remove-indels --min-meanDP 10 --minQ 100 --max-maf 0 --recode --recode-INFO-all"
     log:
@@ -104,12 +104,12 @@ rule filter_vcf:
 
 rule annotate_variants:
     input:
-        calls="03_calls/{sample}.filtered.vcf",  # .vcf, .vcf.gz or .bcf
+        calls="05_calls_filt/{sample}.filtered.vcf",  # .vcf, .vcf.gz or .bcf
         cache="resources/vep/cache",  # can be omitted if fasta and gff are specified
         plugins="resources/vep/plugins",
     output:
-        calls="03_calls/{sample}.annotated.vcf.gz",  # .vcf, .vcf.gz or .bcf
-        stats="03_calls/{sample}.variants.html",
+        calls="06_calls_annot/{sample}.annotated.vcf.gz",  # .vcf, .vcf.gz or .bcf
+        stats="06_calls_annot/{sample}.variants.html",
     params:
         plugins=[],
         extra="--everything",  # optional: extra arguments
