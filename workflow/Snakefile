@@ -78,7 +78,7 @@ rule freebayes:
     input:
         alns="02_mapped/{sample}.rmdup.bam",
         idxs="02_mapped/{sample}.rmdup.bam.bai",
-        ref="ref/genome.fasta",
+        ref="{genome}",
     output:
         vcf = "03_calls/{sample}.vcf",
     log:
