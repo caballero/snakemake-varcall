@@ -1,11 +1,10 @@
 
-samples = ["sampleA", "sampleB"]
-genome = ""
+configfile: "config.yaml"
 
 rule all:
     input:
-        expand("03_calls/{sample}.annotated.vcf.gz", sample=samples), 
-        expand("03_calls/{sample}.variants.html", sample=samples)
+        expand("03_calls/{sample}.annotated.vcf.gz", sample=config["samples"]), 
+        expand("03_calls/{sample}.variants.html", sample=config["samples"])
 
 rule fastp_pre:
     input:
@@ -23,7 +22,7 @@ rule fastp_pre:
 rule bwa_mem:
     input:
         reads=["01_preprocessing/{sample}_1.fastq.gz", "01_preprocessing/{sample}_2.fastq.gz"],
-        idx=multiext("{genome}", ".amb", ".ann", ".bwt", ".pac", ".sa"),
+        idx=multiext(config["genome"], ".amb", ".ann", ".bwt", ".pac", ".sa"),
     output:
         "02_mapped/{sample}.bam"
     log:
@@ -78,7 +77,7 @@ rule freebayes:
     input:
         alns="02_mapped/{sample}.rmdup.bam",
         idxs="02_mapped/{sample}.rmdup.bam.bai",
-        ref="{genome}",
+        ref=config["genome"]+".fa",
     output:
         vcf = "03_calls/{sample}.vcf",
     log:
