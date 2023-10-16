@@ -29,28 +29,42 @@ rule bwa_mem:
         "logs/bwa_mem/{sample}.log"
     params:
         extra=r"-R '@RG\tID:{sample}\tSM:{sample}'",
-        sort="samtools",             # Can be 'none', 'samtools' or 'picard'.
+        sort="none",             # Can be 'none', 'samtools' or 'picard'.
         sort_order="coordinate",  # Can be 'queryname' or 'coordinate'.
         sort_extra=""            # Extra args for samtools/picard.
     threads: 8
     wrapper:
         "v2.6.0/bio/bwa/mem"
 
-rule samtools_index:
+rule sambamba_sort:
     input:
         "02_mapped/{sample}.bam"
     output:
-        "02_mapped/{sample}.bam.bai"
-    log:
-        "logs/samtools_index/{sample}.log"
+        "02_mapped/{sample}.sorted.bam"
     params:
-        "" # optional params string
+        ""  # optional parameters
+    log:
+        "logs/sambamba-sort/{sample}.log"
+    threads: 8
     wrapper:
-        "v2.6.0/bio/samtools/index"
+        "v2.6.0/bio/sambamba/sort"
+
+rule sambamba_index:
+    input:
+        "02_mapped/{sample}.sorted.bam"
+    output:
+        "02_mapped/{sample}.sorted.bam.bai"
+    params:
+        extra=""  # optional parameters
+    log:
+        "logs/sambamba-index/{sample}.log"
+    threads: 8
+    wrapper:
+        "v2.6.0/bio/sambamba/index"
 
 rule sambamba_markdup:
     input:
-        "02_mapped/{sample}.bam"
+        "02_mapped/{sample}.sorted.bam"
     output:
         "03_mapped_rmdup/{sample}.rmdup.bam"
     params:
@@ -61,17 +75,18 @@ rule sambamba_markdup:
     wrapper:
         "v2.6.0/bio/sambamba/markdup"
 
-rule samtools_index_rmdup:
+rule sambamba_index_rmdup:
     input:
         "03_mapped_rmdup/{sample}.rmdup.bam"
     output:
         "03_mapped_rmdup/{sample}.rmdup.bam.bai"
-    log:
-        "logs/samtools_index/{sample}.rmdup.log"
     params:
-        "" # optional params string
+        extra=""  # optional parameters
+    log:
+        "logs/sambamba-index/{sample}.log"
+    threads: 8
     wrapper:
-        "v2.6.0/bio/samtools/index"
+        "v2.6.0/bio/sambamba/index"
 
 rule freebayes:
     input:
