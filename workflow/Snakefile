@@ -130,7 +130,7 @@ rule sambamba_index_rmdup:
 
 rule freebayes:
     input:
-        alns="work/03_mapped_rmdup/{sample}.rmdup.bam",
+        bam="work/03_mapped_rmdup/{sample}.rmdup.bam",
         ref=config["genome"]
     output:
         vcf="work/04_calls/{sample}.vcf"
@@ -144,8 +144,8 @@ rule freebayes:
     shell:
         """
         freebayes \
-            -f {ref} \
-            {input.alns} \
+            -f {input.ref} \
+            {input.bam} \
         > {output.vcf}
         """
 
