@@ -1,4 +1,3 @@
 samples:
-  - DGRP057_SRR933581
-  - DGRP439_SRR835028
+  - sampleID 
 genome: ref/genome.fa
