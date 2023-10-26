@@ -1,0 +1,10 @@
+name: varcall
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - fastp
+  - sambamba
+  - freebayes
+  - bwa
+  - vcftools
