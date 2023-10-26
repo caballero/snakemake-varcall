@@ -63,7 +63,8 @@ rule bwa_mem:
             -S \
             -t 2 \
             -f bam \
-            -o {output.bam}
+            -o {output.bam} \
+            /dev/stdin
         """
 
 
