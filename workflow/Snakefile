@@ -1,20 +1,47 @@
+# Snakemake workflow for variant calling
+# Juan Caballero
+# (C) 2024
 
+import os
+import yaml
+
+# some subroutines needed
+def dump_config_to_yaml(config, output_dir):
+    output_file = os.path.join(output_dir, "run_config.yaml")
+    with open(output_file, 'w') as configfile:
+        yaml.dump(config, configfile)
+
+# setting configurations
 configfile: "config.yaml"
+outdir = workflow.overwrite_workdir #get outdir from -d option of snakemake
+config['outdir'] = outdir
+os.makedirs(config['outdir'], exist_ok=True)
+fastq_dir = str(config['fastq_dir'])
 
+# before running the process
+onstart:
+    print("\n==== Variant calling pipeline starts ====")
+    print("Configuration:")
+    print(config)
+    print("=" * 80)
+    print()
+    dump_config_to_yaml(config, config['outdir'])
+
+# main workflow
 rule all:
     input:
-        expand("work/05_calls_filt/{sample}.filtered.vcf", sample=config["samples"]), 
-        
+        expand(str(outdir) + "/04_calls/{sample}.filt.bcf.csi", sample=config["samples"]) 
+
 rule fastp:
     input:
-        fq1="data/{sample}_1.fastq.gz",
-        fq2="data/{sample}_2.fastq.gz"
+        fq1 = str(fastq_dir) + "/{sample}_1.fastq.gz",
+        fq2 = str(fastq_dir) + "/{sample}_2.fastq.gz"
     output:
-        trim_fq1="work/01_preprocessing/{sample}_1.fastq.gz",
-        trim_fq2="work/01_preprocessing/{sample}_2.fastq.gz",
-        html="work/01_preprocessing/{sample}_report.html",
-        json="work/01_preprocessing/{sample}_report.json"
-    threads: 2
+        trim_fq1 = str(outdir) + "/01_preprocessing/{sample}_1.fastq.gz",
+        trim_fq2 = str(outdir) + "/01_preprocessing/{sample}_2.fastq.gz",
+        html_rep = str(outdir) + "/01_preprocessing/{sample}_report.html",
+        json_rep = str(outdir) + "/01_preprocessing/{sample}_report.json"
+    threads: 10
     log:
         "logs/fastp/{sample}.log"
     conda:
@@ -29,23 +56,23 @@ rule fastp:
             -I {input.fq2} \
             -o {output.trim_fq1} \
             -O {output.trim_fq2} \
-            -h {output.html} \
-            -j {output.json}
+            -h {output.html_rep} \
+            -j {output.json_rep}
         """
         
 
 rule bwa_mem:
     input:
-        genome=config["genome"],
-        fq1="work/01_preprocessing/{sample}_1.fastq.gz",
-        fq2="work/01_preprocessing/{sample}_2.fastq.gz"
+        ref = config["genome"],
+        fq1 = str(outdir) + "/01_preprocessing/{sample}_1.fastq.gz",
+        fq2 = str(outdir) + "/01_preprocessing/{sample}_2.fastq.gz"
     output:
-        bam="work/02_mapped/{sample}.bam"
+        str(outdir) + "/02_mapped/{sample}.bam"
     log:
         "logs/bwa_mem/{sample}.log"
     params:
-        extra=r"-R '@RG\tID:{sample}\tSM:{sample}'"
-    threads: 8
+        extra = r"-R '@RG\tID:{sample}\tSM:{sample}'"
+    threads: 10
     conda:
         "envs/bwa.yaml"
     envmodules:
@@ -56,26 +83,26 @@ rule bwa_mem:
         bwa mem \
             -t {threads} \
             {params.extra} \
-            {input.genome} \
+            {input.ref} \
             {input.fq1} \
             {input.fq2} \
         | sambamba view \
             -S \
             -t 2 \
             -f bam \
-            -o {output.bam} \
+            -o {output} \
             /dev/stdin
         """
 
 
 rule sambamba_sort:
     input:
-        "work/02_mapped/{sample}.bam"
+        str(outdir) + "/02_mapped/{sample}.bam"
     output:
-        "work/02_mapped/{sample}.sorted.bam"
+        str(outdir) + "/02_mapped/{sample}.sorted.bam"
     log:
-        "logs/sambamba-sort/{sample}.log"
-    threads: 8
+        "logs/sambamba_sort/{sample}.log"
+    threads: 10
     conda:
         "envs/sambamba.yaml"
     envmodules:
@@ -90,12 +117,12 @@ rule sambamba_sort:
 
 rule sambamba_markdup:
     input:
-        "work/02_mapped/{sample}.sorted.bam"
+        str(outdir) + "/02_mapped/{sample}.sorted.bam"
     output:
-        "work/03_mapped_rmdup/{sample}.rmdup.bam"
+        str(outdir) + "/03_mapped_rmdup/{sample}.rmdup.bam"
     log:
-        "logs/sambamba-markdup/{sample}.log"
-    threads: 8
+        "logs/sambamba_markdup/{sample}.log"
+    threads: 10
     conda:
         "envs/sambamba.yaml"
     envmodules:
@@ -111,12 +138,12 @@ rule sambamba_markdup:
 
 rule sambamba_index_rmdup:
     input:
-        "work/03_mapped_rmdup/{sample}.rmdup.bam"
+        str(outdir) + "/03_mapped_rmdup/{sample}.rmdup.bam"
     output:
-        "work/03_mapped_rmdup/{sample}.rmdup.bam.bai"
+        str(outdir) + "/03_mapped_rmdup/{sample}.rmdup.bam.bai"
     log:
-        "logs/sambamba-index/{sample}.log"
-    threads: 8
+        "logs/sambamba_index/{sample}.log"
+    threads: 10
     conda:
         "envs/sambamba.yaml"
     envmodules:
@@ -124,49 +151,136 @@ rule sambamba_index_rmdup:
     shell:
         """
         sambamba \
+            index \
             -t {threads} \
             {input}
         """
 
-rule freebayes:
+rule bcftools_mpileup:
     input:
-        bam="work/03_mapped_rmdup/{sample}.rmdup.bam",
-        ref=config["genome"]
+        ref = config["genome"],
+        bam = str(outdir) + "/03_mapped_rmdup/{sample}.rmdup.bam",
+        bai = str(outdir) + "/03_mapped_rmdup/{sample}.rmdup.bam.bai"
     output:
-        vcf="work/04_calls/{sample}.vcf"
+        str(outdir) + "/04_calls/{sample}.pileup.bcf"
+    params:
+        par = config["bcf_mpileup_param"]
     log:
-        "logs/freebayes/{sample}.log"
-    threads: 1
+        "logs/bcftoos_mpileup/{sample}.log"
+    threads: 10
     conda:
-        "envs/freebayes.yaml"
+        "envs/bcftools.yaml"
     envmodules:
-        "freebayes/1.3.2"
+        "bcftools/1.10.2"
     shell:
         """
-        freebayes \
+        bcftools \
+            mpileup \
             -f {input.ref} \
-            {input.bam} \
-        > {output.vcf}
+            {params.par} \
+            --threads {threads} \
+            -o {output} \
+            {input.bam} 
         """
 
-rule filter_vcf:
+
+rule bcftools_call:
     input:
-        "work/04_calls/{sample}.vcf"
+        str(outdir) + "/04_calls/{sample}.pileup.bcf"
     output:
-        "work/05_calls_filt/{sample}.filtered.vcf"
+        str(outdir) + "/04_calls/{sample}.raw.bcf"
     params:
-        extra="--remove-indels --min-meanDP 10 --minQ 100 --max-maf 0 --recode --recode-INFO-all"
+        par = config["bcf_call_param"]
     log:
-        "logs/vcftools/{sample}_filter.log"
+        "logs/bcftoos_call/{sample}.log"
+    threads: 10
     conda:
-        "envs/vcftools.yaml"
+        "envs/bcftools.yaml"
     envmodules:
-        "vcftools/1.2.10"
+        "bcftools/1.10.2"
     shell:
         """
-        vcftools filter \
-            {params.extra} \
-            --vcf {input} \
-            --stdout \
-        > {output}
+        bcftools \
+            call \
+            {params.par} \
+            --threads {threads} \
+            -o {output} \
+            {input} 
         """
+
+
+rule bcftools_norm:
+    input:
+        ref = config["genome"],
+        bcf = str(outdir) + "/04_calls/{sample}.raw.bcf"
+    output:
+        str(outdir) + "/04_calls/{sample}.norm.bcf"
+    params:
+        par = config["bcf_norm_param"]
+    log:
+        "logs/bcftoos_norm/{sample}.log"
+    threads: 10
+    conda:
+        "envs/bcftools.yaml"
+    envmodules:
+        "bcftools/1.10.2"
+    shell:
+        """
+        bcftools \
+            norm \
+            -f {input.ref} \
+            {params.par} \
+            --threads {threads} \
+            -o {output} \
+            {input.bcf} 
+        """
+
+
+rule bcftools_filter:
+    input:
+        str(outdir) + "/04_calls/{sample}.norm.bcf"
+    output:
+        str(outdir) + "/04_calls/{sample}.filt.bcf"
+    params:
+        par = config["bcf_filter_param"]
+    log:
+        "logs/bcftoos_filter/{sample}.log"
+    threads: 10
+    conda:
+        "envs/bcftools.yaml"
+    envmodules:
+        "bcftools/1.10.2"
+    shell:
+        """
+        bcftools \
+            filter \
+            {params.par} \
+            --threads {threads} \
+            -o {output} \
+            {input} 
+        """
+
+
+rule bcftools_index:
+    input:
+        str(outdir) + "/04_calls/{sample}.filt.bcf"
+    output:
+        str(outdir) + "/04_calls/{sample}.filt.bcf.csi"
+    log:
+        "logs/bcftoos_index/{sample}.log"
+    threads: 10
+    conda:
+        "envs/bcftools.yaml"
+    envmodules:
+        "bcftools/1.10.2"
+    shell:
+        """
+        bcftools \
+            index \
+            --threads {threads} \
+            {input} 
+        """
+
+
+onsuccess:
+    print("\n==== Workflow finished successfully! ====\n")
