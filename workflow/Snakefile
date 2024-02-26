@@ -5,6 +5,9 @@
 import os
 import yaml
 
+wildcard_constraints:
+    sample=r".+\d+"
+
 # some subroutines needed
 def dump_config_to_yaml(config, output_dir):
     output_file = os.path.join(output_dir, "run_config.yaml")
@@ -30,7 +33,7 @@ onstart:
 # main workflow
 rule all:
     input:
-        expand(str(outdir) + "/04_calls/{sample}.filt.bcf.csi", sample=config["samples"]) 
+        expand(str(outdir) + "/03_calls/{sample}_filt.bcf.csi", sample=config["samples"]) 
 
 rule fastp:
     input:
@@ -67,7 +70,7 @@ rule bwa_mem:
         fq1 = str(outdir) + "/01_preprocessing/{sample}_1.fastq.gz",
         fq2 = str(outdir) + "/01_preprocessing/{sample}_2.fastq.gz"
     output:
-        str(outdir) + "/02_mapped/{sample}.bam"
+        bam = str(outdir) + "/02_mapped/{sample}.bam"
     log:
         "logs/bwa_mem/{sample}.log"
     params:
@@ -90,16 +93,16 @@ rule bwa_mem:
             -S \
             -t 2 \
             -f bam \
-            -o {output} \
+            -o {output.bam} \
             /dev/stdin
         """
 
 
 rule sambamba_sort:
     input:
-        str(outdir) + "/02_mapped/{sample}.bam"
+        bam_in = str(outdir) + "/02_mapped/{sample}.bam"
     output:
-        str(outdir) + "/02_mapped/{sample}.sorted.bam"
+        bam_out = str(outdir) + "/02_mapped/{sample}_sorted.bam"
     log:
         "logs/sambamba_sort/{sample}.log"
     threads: 10
@@ -111,15 +114,15 @@ rule sambamba_sort:
         """
         sambamba sort \
             -t {threads} \
-            -o {output} \
-            {input}
+            -o {output.bam_out} \
+            {input.bam_in}
         """
 
 rule sambamba_markdup:
     input:
-        str(outdir) + "/02_mapped/{sample}.sorted.bam"
+        bam_in = str(outdir) + "/02_mapped/{sample}_sorted.bam"
     output:
-        str(outdir) + "/03_mapped_rmdup/{sample}.rmdup.bam"
+        bam_out = str(outdir) + "/02_mapped/{sample}_rmdup.bam"
     log:
         "logs/sambamba_markdup/{sample}.log"
     threads: 10
@@ -132,15 +135,15 @@ rule sambamba_markdup:
         sambamba markdup \
             -t {threads} \
             -r \
-            {input} \
-            {output}
+            {input.bam_in} \
+            {output.bam_out}
         """
 
 rule sambamba_index_rmdup:
     input:
-        str(outdir) + "/03_mapped_rmdup/{sample}.rmdup.bam"
+        bam = str(outdir) + "/02_mapped/{sample}_rmdup.bam"
     output:
-        str(outdir) + "/03_mapped_rmdup/{sample}.rmdup.bam.bai"
+        bai = str(outdir) + "/02_mapped/{sample}_rmdup.bam.bai"
     log:
         "logs/sambamba_index/{sample}.log"
     threads: 10
@@ -153,16 +156,16 @@ rule sambamba_index_rmdup:
         sambamba \
             index \
             -t {threads} \
-            {input}
+            {input.bam}
         """
 
 rule bcftools_mpileup:
     input:
         ref = config["genome"],
-        bam = str(outdir) + "/03_mapped_rmdup/{sample}.rmdup.bam",
-        bai = str(outdir) + "/03_mapped_rmdup/{sample}.rmdup.bam.bai"
+        bam = str(outdir) + "/02_mapped/{sample}_rmdup.bam",
+        bai = str(outdir) + "/02_mapped/{sample}_rmdup.bam.bai"
     output:
-        str(outdir) + "/04_calls/{sample}.pileup.bcf"
+        bcf_pil = str(outdir) + "/03_calls/{sample}_pileup.bcf"
     params:
         par = config["bcf_mpileup_param"]
     log:
@@ -179,16 +182,16 @@ rule bcftools_mpileup:
             -f {input.ref} \
             {params.par} \
             --threads {threads} \
-            -o {output} \
+            -o {output.bcf_pil} \
             {input.bam} 
         """
 
 
 rule bcftools_call:
     input:
-        str(outdir) + "/04_calls/{sample}.pileup.bcf"
+        bcf_pal = str(outdir) + "/03_calls/{sample}_pileup.bcf"
     output:
-        str(outdir) + "/04_calls/{sample}.raw.bcf"
+        bcf_raw = str(outdir) + "/03_calls/{sample}_raw.bcf"
     params:
         par = config["bcf_call_param"]
     log:
@@ -212,9 +215,9 @@ rule bcftools_call:
 rule bcftools_norm:
     input:
         ref = config["genome"],
-        bcf = str(outdir) + "/04_calls/{sample}.raw.bcf"
+        bcf_raw = str(outdir) + "/03_calls/{sample}_raw.bcf"
     output:
-        str(outdir) + "/04_calls/{sample}.norm.bcf"
+        bcf_nor = str(outdir) + "/03_calls/{sample}_norm.bcf"
     params:
         par = config["bcf_norm_param"]
     log:
@@ -231,16 +234,16 @@ rule bcftools_norm:
             -f {input.ref} \
             {params.par} \
             --threads {threads} \
-            -o {output} \
-            {input.bcf} 
+            -o {output.bcf_nor} \
+            {input.bcf_raw} 
         """
 
 
 rule bcftools_filter:
     input:
-        str(outdir) + "/04_calls/{sample}.norm.bcf"
+        bcf_nor = str(outdir) + "/03_calls/{sample}_norm.bcf"
     output:
-        str(outdir) + "/04_calls/{sample}.filt.bcf"
+        bcf_fil = str(outdir) + "/03_calls/{sample}_filt.bcf"
     params:
         par = config["bcf_filter_param"]
     log:
@@ -256,16 +259,16 @@ rule bcftools_filter:
             filter \
             {params.par} \
             --threads {threads} \
-            -o {output} \
-            {input} 
+            -o {output.bcf_fil} \
+            {input.bcf_nor} 
         """
 
 
 rule bcftools_index:
     input:
-        str(outdir) + "/04_calls/{sample}.filt.bcf"
+        bcf_fil = str(outdir) + "/03_calls/{sample}_filt.bcf"
     output:
-        str(outdir) + "/04_calls/{sample}.filt.bcf.csi"
+        bcf_idx = str(outdir) + "/03_calls/{sample}_filt.bcf.csi"
     log:
         "logs/bcftoos_index/{sample}.log"
     threads: 10
@@ -278,7 +281,7 @@ rule bcftools_index:
         bcftools \
             index \
             --threads {threads} \
-            {input} 
+            {input.bcf_fil} 
         """
 
 
