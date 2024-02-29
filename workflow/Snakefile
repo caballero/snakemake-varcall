@@ -28,27 +28,27 @@ onstart:
     print(config)
     print("=" * 80)
     print()
-    dump_config_to_yaml(config, config['outdir'])
+    dump_config_to_yaml(config, '.')
 
 # main workflow
 rule all:
     input:
-        expand(str(outdir) + "/03_calls/{sample}_filt.bcf.csi", sample=config["samples"]) 
+        expand("03_calls/{sample}_filt.bcf.csi", sample=config["samples"]) 
 
 rule fastp:
     input:
         fq1 = str(fastq_dir) + "/{sample}_1.fastq.gz",
         fq2 = str(fastq_dir) + "/{sample}_2.fastq.gz"
     output:
-        trim_fq1 = str(outdir) + "/01_preprocessing/{sample}_1.fastq.gz",
-        trim_fq2 = str(outdir) + "/01_preprocessing/{sample}_2.fastq.gz",
-        html_rep = str(outdir) + "/01_preprocessing/{sample}_report.html",
-        json_rep = str(outdir) + "/01_preprocessing/{sample}_report.json"
+        trim_fq1 = "01_preprocessing/{sample}_1.fastq.gz",
+        trim_fq2 = "01_preprocessing/{sample}_2.fastq.gz",
+        html_rep = "01_preprocessing/{sample}_report.html",
+        json_rep = "01_preprocessing/{sample}_report.json"
     threads: 10
     log:
         "logs/fastp/{sample}.log"
-    conda:
-        "envs/fastp.yaml"
+    #conda:
+    #    "envs/fastp.yaml"
     envmodules:
         "fastp/0.20.1"
     shell:
@@ -67,20 +67,20 @@ rule fastp:
 rule bwa_mem:
     input:
         ref = config["genome"],
-        fq1 = str(outdir) + "/01_preprocessing/{sample}_1.fastq.gz",
-        fq2 = str(outdir) + "/01_preprocessing/{sample}_2.fastq.gz"
+        fq1 = "01_preprocessing/{sample}_1.fastq.gz",
+        fq2 = "01_preprocessing/{sample}_2.fastq.gz"
     output:
-        bam = str(outdir) + "/02_mapped/{sample}.bam"
+        bam = "02_mapped/{sample}.bam"
     log:
         "logs/bwa_mem/{sample}.log"
     params:
         extra = r"-R '@RG\tID:{sample}\tSM:{sample}'"
     threads: 10
-    conda:
-        "envs/bwa.yaml"
+    #conda:
+    #    "envs/bwa.yaml"
     envmodules:
         "bwa/0.7.17",
-        "sambamba/0.7.1"
+        "samtools/1.12"
     shell:
         """
         bwa mem \
@@ -89,90 +89,88 @@ rule bwa_mem:
             {input.ref} \
             {input.fq1} \
             {input.fq2} \
-        | sambamba view \
-            -S \
-            -t 2 \
-            -f bam \
+        | samtools view \
+            -b \
+            --threads 2 \
             -o {output.bam} \
-            /dev/stdin
+            -
         """
 
 
-rule sambamba_sort:
+rule samtools_sort:
     input:
-        bam_in = str(outdir) + "/02_mapped/{sample}.bam"
+        bam_in = "02_mapped/{sample}.bam"
     output:
-        bam_out = str(outdir) + "/02_mapped/{sample}_sorted.bam"
+        bam_out = "02_mapped/{sample}_sorted.bam"
     log:
-        "logs/sambamba_sort/{sample}.log"
+        "logs/samtools_sort/{sample}.log"
     threads: 10
-    conda:
-        "envs/sambamba.yaml"
+    #conda:
+    #    "envs/sambamba.yaml"
     envmodules:
-        "sambamba/0.7.1"
+        "samtools/1.12"
     shell:
         """
         sambamba sort \
-            -t {threads} \
+            --threads {threads} \
             -o {output.bam_out} \
             {input.bam_in}
         """
 
-rule sambamba_markdup:
+rule samtools_markdup:
     input:
-        bam_in = str(outdir) + "/02_mapped/{sample}_sorted.bam"
+        bam_in = "02_mapped/{sample}_sorted.bam"
     output:
-        bam_out = str(outdir) + "/02_mapped/{sample}_rmdup.bam"
+        bam_out = "02_mapped/{sample}_rmdup.bam"
     log:
-        "logs/sambamba_markdup/{sample}.log"
+        "logs/samtools_markdup/{sample}.log"
     threads: 10
-    conda:
-        "envs/sambamba.yaml"
+    #conda:
+    #    "envs/sambamba.yaml"
     envmodules:
-        "sambamba/0.7.1"
+        "samtools/1.12"
     shell:
         """
-        sambamba markdup \
-            -t {threads} \
+        samtools markdup \
+            --threads {threads} \
             -r \
             {input.bam_in} \
             {output.bam_out}
         """
 
-rule sambamba_index_rmdup:
+rule samtools_index_rmdup:
     input:
-        bam = str(outdir) + "/02_mapped/{sample}_rmdup.bam"
+        bam = "02_mapped/{sample}_rmdup.bam"
     output:
-        bai = str(outdir) + "/02_mapped/{sample}_rmdup.bam.bai"
+        bai = "02_mapped/{sample}_rmdup.bam.bai"
     log:
         "logs/sambamba_index/{sample}.log"
-    threads: 10
-    conda:
-        "envs/sambamba.yaml"
+    threads: 1
+    #conda:
+    #    "envs/sambamba.yaml"
     envmodules:
-        "sambamba/0.7.1"
+        "samtools/1.12"
     shell:
         """
-        sambamba \
+        samtools \
             index \
-            -t {threads} \
             {input.bam}
         """
 
 rule bcftools_mpileup:
     input:
         ref = config["genome"],
-        bam = str(outdir) + "/02_mapped/{sample}_rmdup.bam",
-        bai = str(outdir) + "/02_mapped/{sample}_rmdup.bam.bai"
+        bam = "02_mapped/{sample}_rmdup.bam",
+        bai = "02_mapped/{sample}_rmdup.bam.bai"
     output:
-        bcf_pil = str(outdir) + "/03_calls/{sample}_pileup.bcf"
+        bcf_pil = "03_calls/{sample}_pileup.bcf"
     params:
         par = config["bcf_mpileup_param"]
     log:
         "logs/bcftoos_mpileup/{sample}.log"
     threads: 10
-    conda:
-        "envs/bcftools.yaml"
+    #conda:
+    #    "envs/bcftools.yaml"
     envmodules:
         "bcftools/1.10.2"
     shell:
@@ -189,16 +187,16 @@ rule bcftools_mpileup:
 
 rule bcftools_call:
     input:
-        bcf_pal = str(outdir) + "/03_calls/{sample}_pileup.bcf"
+        bcf_pal = "03_calls/{sample}_pileup.bcf"
     output:
-        bcf_raw = str(outdir) + "/03_calls/{sample}_raw.bcf"
+        bcf_raw = "03_calls/{sample}_raw.bcf"
     params:
         par = config["bcf_call_param"]
     log:
         "logs/bcftoos_call/{sample}.log"
     threads: 10
-    conda:
-        "envs/bcftools.yaml"
+    #conda:
+    #    "envs/bcftools.yaml"
     envmodules:
         "bcftools/1.10.2"
     shell:
@@ -215,16 +213,16 @@ rule bcftools_call:
 rule bcftools_norm:
     input:
         ref = config["genome"],
-        bcf_raw = str(outdir) + "/03_calls/{sample}_raw.bcf"
+        bcf_raw = "03_calls/{sample}_raw.bcf"
     output:
-        bcf_nor = str(outdir) + "/03_calls/{sample}_norm.bcf"
+        bcf_nor = "03_calls/{sample}_norm.bcf"
     params:
         par = config["bcf_norm_param"]
     log:
         "logs/bcftoos_norm/{sample}.log"
     threads: 10
-    conda:
-        "envs/bcftools.yaml"
+    #conda:
+    #    "envs/bcftools.yaml"
     envmodules:
         "bcftools/1.10.2"
     shell:
@@ -241,16 +239,16 @@ rule bcftools_norm:
 
 rule bcftools_filter:
     input:
-        bcf_nor = str(outdir) + "/03_calls/{sample}_norm.bcf"
+        bcf_nor = "03_calls/{sample}_norm.bcf"
     output:
-        bcf_fil = str(outdir) + "/03_calls/{sample}_filt.bcf"
+        bcf_fil = "03_calls/{sample}_filt.bcf"
     params:
         par = config["bcf_filter_param"]
     log:
         "logs/bcftoos_filter/{sample}.log"
     threads: 10
-    conda:
-        "envs/bcftools.yaml"
+    #conda:
+    #    "envs/bcftools.yaml"
     envmodules:
         "bcftools/1.10.2"
     shell:
@@ -266,14 +264,14 @@ rule bcftools_filter:
 
 rule bcftools_index:
     input:
-        bcf_fil = str(outdir) + "/03_calls/{sample}_filt.bcf"
+        bcf_fil = "03_calls/{sample}_filt.bcf"
     output:
-        bcf_idx = str(outdir) + "/03_calls/{sample}_filt.bcf.csi"
+        bcf_idx = "03_calls/{sample}_filt.bcf.csi"
     log:
         "logs/bcftoos_index/{sample}.log"
-    threads: 10
-    conda:
-        "envs/bcftools.yaml"
+    threads: 1
+    #conda:
+    #    "envs/bcftools.yaml"
     envmodules:
         "bcftools/1.10.2"
     shell:
