@@ -111,7 +111,7 @@ rule samtools_sort:
         "samtools/1.12"
     shell:
         """
-        sambamba sort \
+        samtools sort \
             --threads {threads} \
             -o {output.bam_out} \
             {input.bam_in}
@@ -144,7 +144,7 @@ rule samtools_index_rmdup:
     output:
         bai = "02_mapped/{sample}_rmdup.bam.bai"
     log:
-        "logs/sambamba_index/{sample}.log"
+        "logs/samtools_index/{sample}.log"
     threads: 1
     #conda:
     #    "envs/sambamba.yaml"
