@@ -112,7 +112,7 @@ rule samtools_rsort:
     shell:
         """
         samtools sort \
-            -n \ 
+            -n \
             --threads {threads} \
             -o {output.bam_out} \
             {input.bam_in}
@@ -134,7 +134,7 @@ rule samtools_fixmate:
         """
         samtools fixmate \
             --threads {threads} \
-            -m \ 
+            -m \
             {input.bam_in} \
             {output.bam_out}
         """
