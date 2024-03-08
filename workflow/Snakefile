@@ -97,9 +97,51 @@ rule bwa_mem:
         """
 
 
-rule samtools_sort:
+rule samtools_rsort:
     input:
         bam_in = "02_mapped/{sample}.bam"
+    output:
+        bam_out = "02_mapped/{sample}_rsorted.bam"
+    log:
+        "logs/samtools_rsort/{sample}.log"
+    threads: 10
+    #conda:
+    #    "envs/sambamba.yaml"
+    envmodules:
+        "samtools/1.12"
+    shell:
+        """
+        samtools sort \
+            -n \ 
+            --threads {threads} \
+            -o {output.bam_out} \
+            {input.bam_in}
+        """
+
+rule samtools_fixmate:
+    input:
+        bam_in = "02_mapped/{sample}_rsorted.bam"
+    output:
+        bam_out = "02_mapped/{sample}_fixmate.bam"
+    log:
+        "logs/samtools_fixmate/{sample}.log"
+    threads: 10
+    #conda:
+    #    "envs/sambamba.yaml"
+    envmodules:
+        "samtools/1.12"
+    shell:
+        """
+        samtools fixmate \
+            --threads {threads} \
+            -m \ 
+            {input.bam_in} \
+            {output.bam_out}
+        """
+
+rule samtools_sort:
+    input:
+        bam_in = "02_mapped/{sample}_fixmate.bam"
     output:
         bam_out = "02_mapped/{sample}_sorted.bam"
     log:
