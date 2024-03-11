@@ -1,0 +1,6 @@
+mother_id: MOM
+mother_bcf: /path/to/mother.bcf
+father_id: DAD
+father_bcf: /path/to/father.bcf
+child_id: KID
+child_bcf: /path/to/child.bcf
