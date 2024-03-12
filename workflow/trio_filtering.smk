@@ -55,6 +55,8 @@ rule filter_het:
             --threads {threads} \
             -o {output.vcf} \
             {input.child}
+
+        bcftools index {output.vcf}
         """
 
 rule filter_hom:
@@ -77,6 +79,8 @@ rule filter_hom:
             --threads {threads} \
             -o {output.vcf} \
             {input.child}
+
+        bcftools index {output.vcf}
         """
 
 rule intersect_child_hom_mother:
@@ -223,6 +227,9 @@ rule convert_to_vcf_child_mother_phased:
             {input.vcf_in} \
             {params.par} \
             -o {output.vcf_out}
+        
+
+        bcftools index {output.vcf_out}
         """
 
 rule intersect_child_het_father_not_mother:
@@ -269,6 +276,8 @@ rule convert_to_vcf_child_father_phased:
             {input.vcf_in} \
             {params.par} \
             -o {output.vcf_out}}
+
+        bcftools index {output.vcf_out}
         """
 
 rule filter_snps:
