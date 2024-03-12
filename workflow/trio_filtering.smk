@@ -214,7 +214,7 @@ rule intersect_child_het_father_not_mother:
         child_and_father = expand("{child}_hetero-vs-{father}/0002.vcf.gz", child=config["child_id"], father=config["father_id"]),
         mother_not_child = expand("{child}_hetero-vs-{mother}/0000.vcf.gz", child=config["child_id"], mother=config["mother_id"])
     output:
-        isec_dir = directory(expand("{child}_hetero-and-{father}-and-not-{mother}, child=config["child_id"], mother=config["mother_id"], father=config["father_id"]))
+        isec_dir = directory(expand("{child}_hetero-and-{father}-and-not-{mother}", child=config["child_id"], mother=config["mother_id"], father=config["father_id"]))
         vcf_out  = expand("{child}_heterozygous_{father}_phased.vcf.gz", child=config["child_id"], father=config["father_id"])
     params:
         par = "-O z"
