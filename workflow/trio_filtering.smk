@@ -30,10 +30,10 @@ onstart:
 # main workflow
 rule all:
     input:
-        expand("{child}_homozygous.vcf.gz", child=config["child_id"]),
-        expand("{child}_heterozygous.vcf.gz", child=config["child_id"]),
-        expand("{child}_heterozygous_{mother}_phased.vcf.gz", child=config["child_id"], mother=config["mother_id"]),
-        expand("{child}_heterozygous_{father}_phased.vcf.gz", child=config["child_id"], father=config["father_id"])
+        expand("{child}_homozygous_snps.vcf.gz", child=config["child_id"]),
+        expand("{child}_heterozygous_snps.vcf.gz", child=config["child_id"]),
+        expand("{child}_heterozygous_{mother}_phased_snps.vcf.gz", child=config["child_id"], mother=config["mother_id"]),
+        expand("{child}_heterozygous_{father}_phased_snps.vcf.gz", child=config["child_id"], father=config["father_id"])
  
 rule filter_het:
     input:
@@ -55,8 +55,6 @@ rule filter_het:
             --threads {threads} \
             -o {output.vcf} \
             {input.child}
-
-        bcftools index {output}
         """
 
 rule filter_hom:
@@ -79,8 +77,6 @@ rule filter_hom:
             --threads {threads} \
             -o {output.vcf} \
             {input.child}
-
-        bcftools index {output}
         """
 
 rule intersect_child_hom_mother:
@@ -227,8 +223,6 @@ rule convert_to_vcf_child_mother_phased:
             {input.vcf_in} \
             {params.par} \
             -o {output.vcf_out}
-
-        bcftools index {output.vcf_out}
         """
 
 rule intersect_child_het_father_not_mother:
@@ -274,9 +268,60 @@ rule convert_to_vcf_child_father_phased:
             view \
             {input.vcf_in} \
             {params.par} \
-            -o {output.vcf_out}
+            -o {output.vcf_out}}
+        """
 
-        bcftools index {output.vcf_out}
+rule filter_snps:
+    input:
+        vcf_het = expand("{child}_heterozygous.vcf.gz", child=config["child_id"]),
+        vcf_hom = expand("{child}_homozygous.vcf.gz", child=config["child_id"]),
+        vcf_mom = expand("{child}_heterozygous_{mother}_phased.vcf.gz", child=config["child_id"], mother=config["mother_id"]),
+        vcf_dad = expand("{child}_heterozygous_{father}_phased.vcf.gz", child=config["child_id"], father=config["father_id"])
+    output:
+        vcf_het = expand("{child}_heterozygous_snps.vcf.gz", child=config["child_id"]),
+        vcf_hom = expand("{child}_homozygous_snps.vcf.gz", child=config["child_id"]),
+        vcf_mom = expand("{child}_heterozygous_{mother}_phased_snps.vcf.gz", child=config["child_id"], mother=config["mother_id"]),
+        vcf_dad = expand("{child}_heterozygous_{father}_phased_snps.vcf.gz", child=config["child_id"], father=config["father_id"])
+    params:
+        par = "-i TYPE=\"snp\" -O z"
+    log:
+        "logs/filter_snps.log"
+    threads: 1
+    envmodules:
+        "bcftools/1.10.2"
+    shell:
+        """
+        bcftools \
+            filter \
+            {params.par} \
+            -o {output.vcf_hom} \
+            {output.vcf_hom}
+
+        bcftools index {output.vcf_hom}
+
+        bcftools \
+            filter \
+            {params.par} \
+            -o {output.vcf_het} \
+            {output.vcf_het}
+
+        bcftools index {output.vcf_het}
+
+        bcftools \
+            filter \
+            {params.par} \
+            -o {output.vcf_mom} \
+            {output.vcf_mom}
+
+        bcftools index {output.vcf_mom}
+
+        bcftools \
+            filter \
+            {params.par} \
+            -o {output.vcf_dad} \
+            {output.vcf_dad}
+
+        bcftools index {output.vcf_dad}
         """
 
 onsuccess:
