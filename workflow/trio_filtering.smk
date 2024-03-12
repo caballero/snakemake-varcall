@@ -30,14 +30,14 @@ onstart:
 # main workflow
 rule all:
     input:
-        config["child_id"] + "_heterozygous_" + config["mother"] + "_phased.vcf.gz",
-        config["child_id"] + "_heterozygous_" + config["father"] + "_phased.vcf.gz"
-
+        expand("{child}_heterozygous_{mother}_phased.vcf.gz", child=config["child_id"], mother=config["mother_id"]),
+        expand("{child}_heterozygous_{father}_phased.vcf.gz", child=config["child_id"], mother=config["father_id"])
+ 
 rule filter_het:
     input:
-        config["child_bcf"]
+        child = config["child_bcf"]
     output:
-        config["child_id"] + "_heterozygous.vcf.gz"
+        vcf = expand("{child}_heterozygous.vcf.gz", child=config["child_id"])
     params:
         par = "-i 'GT=\"0/1\"' -O z"
     log:
@@ -51,17 +51,17 @@ rule filter_het:
             filter \
             {params.par} \
             --threads {threads} \
-            -o {output} \
-            {input}
+            -o {output.vcf} \
+            {input.child}
 
         bcftools index {output}
         """
 
 rule filter_hom:
     input:
-        config["child_bcf"]
+        child = config["child_bcf"]
     output:
-        vcf_hom = config["child_id"] + "_homozygous.vcf.gz"
+        vcf = expand("{child}_homozygous.vcf.gz", child=config["child_id"])
     params:
         par = "-i 'GT=\"1/1\"' -O z"
     log:
@@ -75,8 +75,8 @@ rule filter_hom:
             filter \
             {params.par} \
             --threads {threads} \
-            -o {output} \
-            {input}
+            -o {output.vcf} \
+            {input.child}
 
         bcftools index {output}
         """
@@ -84,9 +84,9 @@ rule filter_hom:
 rule intersect_child_hom_mother:
     input:
         mother = config["mother_bcf"],
-        child  = config["child_id"] + "_homozygous.vcf.gz"
+        child  = expand("{child}_homozygous.vcf.gz", child=config["child_id"])
     output:
-        config["child_id"] + "_homo-vs-" + config["mother"]
+        dirout = directory(expand("{child}_homo-vs-{mother}", child=config["child_id"], mothr=config["mother_id"]))
     params:
         par = "-O z"
     log:
@@ -102,15 +102,15 @@ rule intersect_child_hom_mother:
             {input.mother} \
             {params.par} \
             --threads {threads} \
-            -p {output}
+            -p {output.dirout}
         """
 
 rule intersect_child_het_mother:
     input:
         mother = config["mother_bcf"],
-        child  = config["child_id"] + "_heterozygous.vcf.gz"
+        child  = expand("{child}_heterozygous.vcf.gz", child=config["child_id"])
     output:
-        config["child_id"] + "_hetero-vs-" + config["mother"]
+        dirout = directory(expand("{child}_hetero-vs-{mother}", child=config["child_id"], mother=config["mother_id"]))
     params:
         par = "-O z"
     log:
@@ -126,15 +126,15 @@ rule intersect_child_het_mother:
             {input.mother} \
             {params.par} \
             --threads {threads} \
-            -p {output}
+            -p {output.dirout}
         """
 
 rule intersect_child_hom_father:
     input:
         father = config["father_bcf"],
-        child  = config["child_id"] + "_homozygous.vcf.gz"
+        child  = expand("{child}_homozygous.vcf.gz", child=config["child_id"])
     output:
-        config["child_id"] + "_homo-vs-" + config["father"]
+        dirout = directory(expand("{child}_homo-vs-{father}", child=config["child_id"], father=config["father_id"]))
     params:
         par = "-O z"
     log:
@@ -150,15 +150,15 @@ rule intersect_child_hom_father:
             {input.father} \
             {params.par} \
             --threads {threads} \
-            -p {output}
+            -p {output.dirout}
         """
 
 rule intersect_child_het_father:
     input:
         mother = config["father_bcf"],
-        child  = config["child_id"] + "_heterozygous.vcf.gz"
+        child  = expand("{child}_heterozygous.vcf.gz", child=config["child_id"])
     output:
-        config["child_id"] + "_hetero-vs-" + config["father"]
+        dirout = directory(expand("{child}_hetero-vs-{father}", child=config["child_id"], father=config["father_id"]))
     params:
         par = "-O z"
     log:
@@ -174,16 +174,16 @@ rule intersect_child_het_father:
             {input.father} \
             {params.par} \
             --threads {threads} \
-            -p {output}
+            -p {output.dirout}
         """
 
 rule intersect_child_het_mother_not_father:
     input:
-        child_and_mother = config["child_id"] + "_hetero-vs-" + config["mother"] + "/0002.vcf.gz",
-        father_not_child = config["child_id"] + "_hetero-vs-" + config["father"] + "/0000.vcf.gz"
+        child_and_mother = expand("{child}_hetero-vs-{mother}/0002.vcf.gz", child=config["child_id"], mother=config["mother_id"]),
+        father_not_child = expand("{child}_hetero-vs-{father}/0000.vcf.gz", child=config["child_id"], father=config["father_id"])
     output:
-        isec_dir = config["child_id"] + "_hetero-and-" + config["mother"] + "-and-not-" + config['father'],
-        vcf_out  = config["child_id"] + "_heterozygous_" + config["mother"] + "_phased.vcf.gz"
+        isec_dir = directory(expand("{child}_hetero-and-{mother}-and-not-{father}", child=config["child_id"], mother=config["mother_id"], father=config['father_id'])),
+        vcf_out  = expand("{child}_heterozygous_{mother}_phased.vcf.gz", child=config["child_id"], mother=config["mother_id"])
     params:
         par = "-O z"
     log:
@@ -211,11 +211,11 @@ rule intersect_child_het_mother_not_father:
 
 rule intersect_child_het_father_not_mother:
     input:
-        child_and_father = config["child_id"] + "_hetero-vs-" + config["father"] + "/0002.vcf.gz",
-        mother_not_child = config["child_id"] + "_hetero-vs-" + config["mother"] + "/0000.vcf.gz"
+        child_and_father = expand("{child}_hetero-vs-{father}/0002.vcf.gz", child=config["child_id"], father=config["father_id"]),
+        mother_not_child = expand("{child}_hetero-vs-{mother}/0000.vcf.gz", child=config["child_id"], mother=config["mother_id"])
     output:
-        isec_dir = config["child_id"] + "_hetero-and-" + config["father"] + "-and-not-" + config['mother'],
-        vcf_out  = config["child_id"] + "_heterozygous_" + config["father"] + "_phased.vcf.gz"
+        isec_dir = directory(expand("{child}_hetero-and-{father}-and-not-{mother}, child=config["child_id"], mother=config["mother_id"], father=config["father_id"]))
+        vcf_out  = expand("{child}_heterozygous_{father}_phased.vcf.gz", child=config["child_id"], father=config["father_id"])
     params:
         par = "-O z"
     log:
