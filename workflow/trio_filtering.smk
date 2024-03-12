@@ -31,7 +31,7 @@ onstart:
 rule all:
     input:
         expand("{child}_heterozygous_{mother}_phased.vcf.gz", child=config["child_id"], mother=config["mother_id"]),
-        expand("{child}_heterozygous_{father}_phased.vcf.gz", child=config["child_id"], mother=config["father_id"])
+        expand("{child}_heterozygous_{father}_phased.vcf.gz", child=config["child_id"], father=config["father_id"])
  
 rule filter_het:
     input:
