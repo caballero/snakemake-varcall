@@ -48,7 +48,7 @@ rule fastp:
     log:
         "logs/fastp/{sample}.log"
     #conda:
-    #    "envs/fastp.yaml"
+    #    "envs/environment_varcall.yaml"
     envmodules:
         "fastp/0.20.1"
     shell:
@@ -77,7 +77,7 @@ rule bwa_mem:
         extra = r"-R '@RG\tID:{sample}\tSM:{sample}'"
     threads: 10
     #conda:
-    #    "envs/bwa.yaml"
+    #    "envs/environment_varcall.yaml"
     envmodules:
         "bwa/0.7.17",
         "samtools/1.12"
@@ -106,7 +106,7 @@ rule samtools_rsort:
         "logs/samtools_rsort/{sample}.log"
     threads: 10
     #conda:
-    #    "envs/sambamba.yaml"
+    #    "envs/environment_varcall.yaml"
     envmodules:
         "samtools/1.12"
     shell:
@@ -127,7 +127,7 @@ rule samtools_fixmate:
         "logs/samtools_fixmate/{sample}.log"
     threads: 10
     #conda:
-    #    "envs/sambamba.yaml"
+    #    "envs/environment_varcall.yaml"
     envmodules:
         "samtools/1.12"
     shell:
@@ -148,7 +148,7 @@ rule samtools_sort:
         "logs/samtools_sort/{sample}.log"
     threads: 10
     #conda:
-    #    "envs/sambamba.yaml"
+    #    "envs/environment_varcall.yaml"
     envmodules:
         "samtools/1.12"
     shell:
@@ -168,7 +168,7 @@ rule samtools_markdup:
         "logs/samtools_markdup/{sample}.log"
     threads: 10
     #conda:
-    #    "envs/sambamba.yaml"
+    #    "envs/environment_varcall.yaml"
     envmodules:
         "samtools/1.12"
     shell:
@@ -189,7 +189,7 @@ rule samtools_index_rmdup:
         "logs/samtools_index/{sample}.log"
     threads: 1
     #conda:
-    #    "envs/sambamba.yaml"
+    #    "envs/environment_varcall.yaml"
     envmodules:
         "samtools/1.12"
     shell:
@@ -212,7 +212,7 @@ rule bcftools_mpileup:
         "logs/bcftoos_mpileup/{sample}.log"
     threads: 10
     #conda:
-    #    "envs/bcftools.yaml"
+    #    "envs/environment_varcall.yaml"
     envmodules:
         "bcftools/1.10.2"
     shell:
@@ -238,7 +238,7 @@ rule bcftools_call:
         "logs/bcftoos_call/{sample}.log"
     threads: 10
     #conda:
-    #    "envs/bcftools.yaml"
+    #    "envs/environment_varcall.yaml"
     envmodules:
         "bcftools/1.10.2"
     shell:
@@ -264,7 +264,7 @@ rule bcftools_norm:
         "logs/bcftoos_norm/{sample}.log"
     threads: 10
     #conda:
-    #    "envs/bcftools.yaml"
+    #    "envs/environment_varcall.yaml"
     envmodules:
         "bcftools/1.10.2"
     shell:
@@ -290,7 +290,7 @@ rule bcftools_filter:
         "logs/bcftoos_filter/{sample}.log"
     threads: 10
     #conda:
-    #    "envs/bcftools.yaml"
+    #    "envs/environment_varcall.yaml"
     envmodules:
         "bcftools/1.10.2"
     shell:
@@ -313,7 +313,7 @@ rule bcftools_index:
         "logs/bcftoos_index/{sample}.log"
     threads: 1
     #conda:
-    #    "envs/bcftools.yaml"
+    #    "envs/environment_varcall.yaml"
     envmodules:
         "bcftools/1.10.2"
     shell:
