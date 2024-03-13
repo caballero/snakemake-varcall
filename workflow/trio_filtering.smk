@@ -292,7 +292,7 @@ rule filter_snps:
         vcf_mom = expand("{child}_heterozygous_{mother}_phased_snps.vcf.gz", child=config["child_id"], mother=config["mother_id"]),
         vcf_dad = expand("{child}_heterozygous_{father}_phased_snps.vcf.gz", child=config["child_id"], father=config["father_id"])
     params:
-        par = "-i TYPE=\"snp\" -O z"
+        par = "-i 'TYPE=\"INDEL\"' -O z"
     log:
         "logs/filter_snps.log"
     threads: 1
