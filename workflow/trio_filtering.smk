@@ -275,7 +275,7 @@ rule convert_to_vcf_child_father_phased:
             view \
             {input.vcf_in} \
             {params.par} \
-            -o {output.vcf_out}}
+            -o {output.vcf_out}
 
         bcftools index {output.vcf_out}
         """
@@ -304,7 +304,7 @@ rule filter_snps:
             filter \
             {params.par} \
             -o {output.vcf_hom} \
-            {output.vcf_hom}
+            {input.vcf_hom}
 
         bcftools index {output.vcf_hom}
 
@@ -312,7 +312,7 @@ rule filter_snps:
             filter \
             {params.par} \
             -o {output.vcf_het} \
-            {output.vcf_het}
+            {input.vcf_het}
 
         bcftools index {output.vcf_het}
 
@@ -320,7 +320,7 @@ rule filter_snps:
             filter \
             {params.par} \
             -o {output.vcf_mom} \
-            {output.vcf_mom}
+            {input.vcf_mom}
 
         bcftools index {output.vcf_mom}
 
@@ -328,7 +328,7 @@ rule filter_snps:
             filter \
             {params.par} \
             -o {output.vcf_dad} \
-            {output.vcf_dad}
+            {input.vcf_dad}
 
         bcftools index {output.vcf_dad}
         """
