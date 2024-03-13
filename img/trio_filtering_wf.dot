@@ -1,0 +1,44 @@
+digraph snakemake_dag {
+    graph[bgcolor=white, margin=0];
+    node[shape=box, style=rounded, fontname=sans,                 fontsize=10, penwidth=2];
+    edge[penwidth=2, color=grey];
+	0[label = "results dir", color = "0.21 0.6 0.85", style="rounded"];
+	1[label = "filter_snps", color = "0.62 0.6 0.85", style="rounded"];
+	2[label = "filter_het", color = "0.62 0.6 0.85", style="rounded"];
+	3[label = "filter_hom", color = "0.62 0.6 0.85", style="rounded"];
+	4[label = "convert_to_vcf_child_mother_phased", color = "0.62 0.6 0.85", style="rounded"];
+	5[label = "intersect_child_het_mother_not_father", color = "0.62 0.6 0.85", style="rounded"];
+	6[label = "intersect_child_het_mother", color = "0.62 0.6 0.85", style="rounded"];
+	7[label = "intersect_child_het_father", color = "0.62 0.6 0.85", style="rounded"];
+	8[label = "convert_to_vcf_child_father_phased", color = "0.62 0.6 0.85", style="rounded"];
+	9[label = "intersect_child_het_father_not_mother", color = "0.62 0.6 0.85", style="rounded"];
+	10[label = "Config YAML\nsample IDs\nBCF paths\nchild|mother|father", color = "0.00 0.6 0.85", style="rounded"];
+	11[label = "child hom\nVCF", color = "0.00 0.6 0.85", style="rounded"];
+	12[label = "child het\nVCF", color = "0.00 0.6 0.85", style="rounded"];
+	13[label = "child het phased mother\nVCF", color = "0.00 0.6 0.85", style="rounded"];
+	14[label = "child het phased father\nVCF", color = "0.00 0.6 0.85", style="rounded"];
+	15[label = "logs", color = "0.00 0.6 0.85", style="rounded"];
+	16[label = "run_config.yaml", color = "0.00 0.6 0.85", style="rounded"];
+	
+	1 -> 0
+	2 -> 1
+	3 -> 1
+	4 -> 1
+	8 -> 1
+	5 -> 4
+	6 -> 5
+	7 -> 5
+	2 -> 6
+	2 -> 7
+	9 -> 8
+	7 -> 9
+	6 -> 9
+	10 -> 2
+	10 -> 3
+	0 -> 11
+	0 -> 12
+	0 -> 13
+	0 -> 14
+	0 -> 15
+	0 -> 16
+}            

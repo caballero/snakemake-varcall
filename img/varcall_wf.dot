@@ -1,0 +1,44 @@
+digraph snakemake_dag {
+    graph[bgcolor=white, margin=0];
+    node[shape=box, style=rounded, fontname=sans, fontsize=10, penwidth=2];
+    edge[penwidth=2, color=grey];
+	0[label = "results_dir", color = "0.21 0.6 0.85", style="rounded"];
+	1[label = "bcftools_index", color = "0.62 0.6 0.85", style="rounded"];
+	2[label = "bcftools_filter", color = "0.62 0.6 0.85", style="rounded"];
+	3[label = "bcftools_norm", color = "0.62 0.6 0.85", style="rounded"];
+	4[label = "bcftools_call", color = "0.62 0.6 0.85", style="rounded"];
+	5[label = "bcftools_mpileup", color = "0.62 0.6 0.85", style="rounded"];
+	6[label = "samtools_markdup", color = "0.62 0.6 0.85", style="rounded"];
+	7[label = "samtools_sort", color = "0.62 0.6 0.85", style="rounded"];
+	8[label = "samtools_fixmate", color = "0.62 0.6 0.85", style="rounded"];
+	9[label = "samtools_rsort", color = "0.62 0.6 0.85", style="rounded"];
+	10[label = "bwa_mem", color = "0.62 0.6 0.85", style="rounded"];
+	11[label = "fastp", color = "0.62 0.6 0.85", style="rounded"];
+	12[label = "samtools_index_rmdup", color = "0.62 0.6 0.85", style="rounded"];
+	13[label = "Config YAML:\nsamples\nfastq_dir\ngenome\nparams", color = "0.00 0.6 0.85", style="rounded"];
+	14[label = "01_preprocessing\ntrim fastq\nQC reports", color = "0.00 0.6 0.85", style="rounded"];
+	15[label = "02_mapped\nBAM files", color = "0.00 0.6 0.85", style="rounded"];
+	16[label = "03_calls\nfinal BCFs", color = "0.00 0.6 0.85", style="rounded"];
+	17[label = "logs", color = "0.00 0.6 0.85", style="rounded"];
+	18[label = "run_config.yaml", color = "0.00 0.6 0.85", style="rounded"];
+	1 -> 0
+	2 -> 1
+	3 -> 2
+	4 -> 3
+	5 -> 4
+	6 -> 5
+	12 -> 5
+	7 -> 6
+	8 -> 7
+	9 -> 8
+	10 -> 9
+	11 -> 10
+	6 -> 12
+	13 -> 11
+	0 -> 14
+	0 -> 15
+	0 -> 16
+	0 -> 17
+	0 -> 18
+	
+}            
