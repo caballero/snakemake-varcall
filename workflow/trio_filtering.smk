@@ -2,21 +2,16 @@
 # Juan Caballero
 # (C) 2024
 
-import os
 import yaml
 
-wildcard_constraints:
-    sample=r".+\d+"
-
 # some subroutines needed
-def dump_config_to_yaml(config, output_dir):
-    output_file = os.path.join(output_dir, "run_config.yaml")
+def dump_config_to_yaml(config):
+    output_file = "run_config.yaml"
     with open(output_file, 'w') as configfile:
         yaml.dump(config, configfile)
 
 # setting configurations
 configfile: "config.yaml"
-outdir = workflow.overwrite_workdir #get outdir from -d option of snakemake
 
 # before running the process
 onstart:
@@ -25,7 +20,7 @@ onstart:
     print(config)
     print("=" * 80)
     print()
-    dump_config_to_yaml(config, '.')
+    dump_config_to_yaml(config)
 
 # main workflow
 rule all:
