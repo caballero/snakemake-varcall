@@ -89,7 +89,7 @@ rule consensus_mom:
     output:
         fas = expand("{sample}_{label}_phased_genome.fasta", sample=config["sample_id"], label=config["mom_label"])
     params:
-        par = "-H A"
+        par = "-H A",
         chr = config["phased_chroms"]
     log:
         "logs/consensus_mom_phased.log"
@@ -124,7 +124,7 @@ rule consensus_dad:
     output:
         fas = expand("{sample}_{label}_phased_genome.fasta", sample=config["sample_id"], label=config["dad_label"])
     params:
-        par = "-H A"
+        par = "-H A",
         chr = config["phased_chroms"]
     log:
         "logs/consensus_dad_phased.log"
@@ -158,7 +158,7 @@ rule consensus_unphased_X:
     output:
         fas = expand("{sample}_unphased_genome_X.fasta", sample=config["sample_id"])
     params:
-        par = "-H A"
+        par = "-H A",
         chr = config["unphased_chroms_X"]
     log:
         "logs/consensus_unphased_X.log"
@@ -190,7 +190,7 @@ rule consensus_unphased_Y:
     output:
         fas = expand("{sample}_unphased_genome_Y.fasta", sample=config["sample_id"])
     params:
-        par = "-H A"
+        par = "-H A",
         chr = config["unphased_chroms_Y"]
     log:
         "logs/consensus_unphased_X.log"
@@ -218,7 +218,7 @@ rule combine_fasta:
         id  = config["sample_id"],
         mom = expand("{sample}_{label}_phased_genome.fasta", sample=config["sample_id"], label=config["mom_label"]),
         dad = expand("{sample}_{label}_phased_genome.fasta", sample=config["sample_id"], label=config["dad_label"]),
-        upx = expand("{sample}_unphased_genome_X.fasta", sample=config["sample_id"])
+        upx = expand("{sample}_unphased_genome_X.fasta", sample=config["sample_id"]),
         upy = expand("{sample}_unphased_genome_Y.fasta", sample=config["sample_id"])
     output:
         fas = expand("{sample}_diploid_genome.fasta", sample=config["sample_id"])
