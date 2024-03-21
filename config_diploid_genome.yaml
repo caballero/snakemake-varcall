@@ -5,6 +5,13 @@ hom_vcf: /path/to/homozygous.vcf
 mom_phased_vcf: /path/to/mom.phased.vcf
 dad_phased_vcf: /path/to/dad.phased.vcf
 reference_genome: /path/to/genome.fa
-phased_chrom: "1 2 3 4"
-unphased_chrom: "X Y MT"
-unphased_label: dad_id
+phased_chrom:
+  - "1"
+  - "2"
+  - "3"
+  - "4"
+unphased_chrom_X:
+  - "X"
+  - "MT"
+unphased_chrom_Y:
+  -"Y"

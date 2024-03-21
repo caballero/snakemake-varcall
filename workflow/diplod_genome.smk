@@ -149,20 +149,51 @@ rule consensus_dad:
         > {output.fas}
         """
 
-rule consensus_unphased:
+rule consensus_unphased_X:
     input:
         id  = config["sample_id"],
         ref = config["reference_genome"],
-        lab = config["unphased_label"],
-        vcf = expand("{sample}_{label}_phased_chroms.vcf.gz", sample=config["sample_id"], label=config["unphased_label"]),
-        idx = expand("{sample}_{label}_phased_chroms.vcf.gz.csi", sample=config["sample_id"], label=config["unphased_label"])
+        vcf = expand("{sample}_{label}_phased_chroms.vcf.gz", sample=config["sample_id"], label=config["mom_label"]),
+        idx = expand("{sample}_{label}_phased_chroms.vcf.gz.csi", sample=config["sample_id"], label=config["mom_label"])
     output:
-        fas = expand("{sample}_unphased_genome.fasta", sample=config["sample_id"])
+        fas = expand("{sample}_unphased_genome_X.fasta", sample=config["sample_id"])
     params:
         par = "-H A"
-        chr = config["unphased_chroms"]
+        chr = config["unphased_chroms_X"]
     log:
-        "logs/consensus_unphased.log"
+        "logs/consensus_unphased_X.log"
+    threads: 1
+    envmodules:
+        "bcftools/1.10.2"
+        "samtools/1.12"
+    shell:
+        """
+        samtools \
+            faidx \
+            {input.ref} \
+            {params.chr} \
+        | \
+        bcftools \
+            consensus \
+            {params.par} \
+            --sample {input.id} \
+            {input.vcf} \
+        > {output.fas}
+        """
+
+rule consensus_unphased_Y:
+    input:
+        id  = config["sample_id"],
+        ref = config["reference_genome"],
+        vcf = expand("{sample}_{label}_phased_chroms.vcf.gz", sample=config["sample_id"], label=config["dad_label"]),
+        idx = expand("{sample}_{label}_phased_chroms.vcf.gz.csi", sample=config["sample_id"], label=config["dad_label"])
+    output:
+        fas = expand("{sample}_unphased_genome_Y.fasta", sample=config["sample_id"])
+    params:
+        par = "-H A"
+        chr = config["unphased_chroms_Y"]
+    log:
+        "logs/consensus_unphased_X.log"
     threads: 1
     envmodules:
         "bcftools/1.10.2"
@@ -187,7 +218,8 @@ rule combine_fasta:
         id  = config["sample_id"],
         mom = expand("{sample}_{label}_phased_genome.fasta", sample=config["sample_id"], label=config["mom_label"]),
         dad = expand("{sample}_{label}_phased_genome.fasta", sample=config["sample_id"], label=config["dad_label"]),
-        unp = expand("{sample}_unphased_genome.fasta", sample=config["sample_id"])
+        upx = expand("{sample}_unphased_genome_X.fasta", sample=config["sample_id"])
+        upy = expand("{sample}_unphased_genome_Y.fasta", sample=config["sample_id"])
     output:
         fas = expand("{sample}_diploid_genome.fasta", sample=config["sample_id"])
     threads: 1
@@ -198,7 +230,8 @@ rule combine_fasta:
         cat \
             {input.mom} \
             {input.dad} \
-            {input.unp} \
+            {input.upx} \
+            {input.upy}
             > {output.fas}
         """
 
