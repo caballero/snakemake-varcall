@@ -56,12 +56,12 @@ rule merge_mom_phased:
 rule merge_dad_phased:
     input:
         hom_vcf = config["hom_vcf"],
-        par_vcf = config["mom_phased_vcf"]
+        par_vcf = config["dad_phased_vcf"]
     output:
         vcf = expand("{sample}_{label}_phased_chroms.vcf.gz", sample=config["sample_id"], label=config["dad_label"]),
         idx = expand("{sample}_{label}_phased_chroms.vcf.gz.csi", sample=config["sample_id"], label=config["dad_label"])
     params:
-        par = "-O z  --allow-overlaps"
+        par = "-O z --allow-overlaps"
     log:
         "logs/merge_dad_phased.log"
     threads: 1
@@ -95,7 +95,7 @@ rule consensus_mom:
         "logs/consensus_mom_phased.log"
     threads: 1
     envmodules:
-        "bcftools/1.10.2"
+        "bcftools/1.10.2",
         "samtools/1.12"
     shell:
         """
@@ -110,7 +110,7 @@ rule consensus_mom:
             --sample {params.id} \
             {input.vcf} \
         | \
-        sed 's/^>(.*)/>\\1_{params.lab}/' > {output.fas}
+        perl -pe 's/^>(.*)/>$1_{params.lab}/' > {output.fas}
         """
 
 rule consensus_dad:
@@ -129,7 +129,7 @@ rule consensus_dad:
         "logs/consensus_dad_phased.log"
     threads: 1
     envmodules:
-        "bcftools/1.10.2"
+        "bcftools/1.10.2",
         "samtools/1.12"
     shell:
         """
@@ -144,7 +144,7 @@ rule consensus_dad:
             --sample {params.id} \
             {input.vcf} \
         | \
-        sed 's/^>(.*)/>\\1_{params.lab}/' > {output.fas}
+        perl -pe 's/^>(.*)/>$1_{params.lab}/' > {output.fas}
         """
 
 rule consensus_unphased_X:
@@ -163,7 +163,7 @@ rule consensus_unphased_X:
         "logs/consensus_unphased_X.log"
     threads: 1
     envmodules:
-        "bcftools/1.10.2"
+        "bcftools/1.10.2",
         "samtools/1.12"
     shell:
         """
@@ -178,7 +178,7 @@ rule consensus_unphased_X:
             --sample {params.id} \
             {input.vcf} \
         | \
-        sed 's/^>(.*)/>\\1_{params.lab}/' > {output.fas}
+        perl -pe 's/^>(.*)/>$1_{params.lab}/' > {output.fas}
         """
 
 rule consensus_unphased_Y:
@@ -197,7 +197,7 @@ rule consensus_unphased_Y:
         "logs/consensus_unphased_Y.log"
     threads: 1
     envmodules:
-        "bcftools/1.10.2"
+        "bcftools/1.10.2",
         "samtools/1.12"
     shell:
         """
@@ -212,7 +212,7 @@ rule consensus_unphased_Y:
             --sample {params.id} \
             {input.vcf} \
         | \
-        sed 's/^>(.*)/>\\1_{params.lab}/' > {output.fas}
+        perl -pe 's/^>(.*)/>$1_{params.lab}/' > {output.fas}
         """
 
 rule combine_fasta:
