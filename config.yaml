@@ -6,4 +6,4 @@ genome: ref/genome.fa
 bcf_mpileup_param: "--min-MQ 20 --min-BQ 20 -a FORMAT/AD,FORMAT/DP,FORMAT/SP,INFO/AD -O b"
 bcf_call_param: "-c -f GQ -v -O b"
 bcf_norm_param: "-m - -O b"
-bcf_filter_param: "-i 'INFO/DP > 40 & QUAL > 200 & (TYPE\"snp\" | IDV > 1)' -O b"
+bcf_filter_param: "-i 'INFO/DP > 40 & QUAL > 200 & (TYPE = \"snp\" | IDV > 1)' -O b"
