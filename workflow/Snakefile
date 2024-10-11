@@ -4,8 +4,8 @@
 
 import yaml
 
-wildcard_constraints:
-    sample=r".+\d+"
+#wildcard_constraints:
+#    sample=r".+\d+"
 
 # some subroutines needed
 def dump_config_to_yaml(config):
@@ -24,7 +24,7 @@ onstart:
     print(config)
     print("=" * 80)
     print()
-    dump_config_to_yaml(config)
+#    dump_config_to_yaml(config)
 
 # main workflow
 rule all:
@@ -46,7 +46,7 @@ rule fastp:
     #conda:
     #    "envs/environment_varcall.yaml"
     envmodules:
-        "fastp/0.20.1"
+        "fastp/0.23.4"
     shell:
         """
         fastp \
@@ -75,8 +75,8 @@ rule bwa_mem:
     #conda:
     #    "envs/environment_varcall.yaml"
     envmodules:
-        "bwa/0.7.17",
-        "samtools/1.12"
+        "bwa/0.7.18",
+        "samtools/1.21"
     shell:
         """
         bwa mem \
@@ -104,7 +104,7 @@ rule samtools_rsort:
     #conda:
     #    "envs/environment_varcall.yaml"
     envmodules:
-        "samtools/1.12"
+        "samtools/1.21"
     shell:
         """
         samtools sort \
@@ -125,7 +125,7 @@ rule samtools_fixmate:
     #conda:
     #    "envs/environment_varcall.yaml"
     envmodules:
-        "samtools/1.12"
+        "samtools/1.21"
     shell:
         """
         samtools fixmate \
@@ -146,7 +146,7 @@ rule samtools_sort:
     #conda:
     #    "envs/environment_varcall.yaml"
     envmodules:
-        "samtools/1.12"
+        "samtools/1.21"
     shell:
         """
         samtools sort \
@@ -166,7 +166,7 @@ rule samtools_markdup:
     #conda:
     #    "envs/environment_varcall.yaml"
     envmodules:
-        "samtools/1.12"
+        "samtools/1.21"
     shell:
         """
         samtools markdup \
@@ -187,7 +187,7 @@ rule samtools_index_rmdup:
     #conda:
     #    "envs/environment_varcall.yaml"
     envmodules:
-        "samtools/1.12"
+        "samtools/1.21"
     shell:
         """
         samtools \
@@ -210,7 +210,7 @@ rule bcftools_mpileup:
     #conda:
     #    "envs/environment_varcall.yaml"
     envmodules:
-        "bcftools/1.10.2"
+        "bcftools/1.21"
     shell:
         """
         bcftools \
@@ -236,7 +236,7 @@ rule bcftools_call:
     #conda:
     #    "envs/environment_varcall.yaml"
     envmodules:
-        "bcftools/1.10.2"
+        "bcftools/1.21"
     shell:
         """
         bcftools \
@@ -262,7 +262,7 @@ rule bcftools_norm:
     #conda:
     #    "envs/environment_varcall.yaml"
     envmodules:
-        "bcftools/1.10.2"
+        "bcftools/1.21"
     shell:
         """
         bcftools \
@@ -288,7 +288,7 @@ rule bcftools_filter:
     #conda:
     #    "envs/environment_varcall.yaml"
     envmodules:
-        "bcftools/1.10.2"
+        "bcftools/1.21"
     shell:
         """
         bcftools \
@@ -311,7 +311,7 @@ rule bcftools_index:
     #conda:
     #    "envs/environment_varcall.yaml"
     envmodules:
-        "bcftools/1.10.2"
+        "bcftools/1.21"
     shell:
         """
         bcftools \
