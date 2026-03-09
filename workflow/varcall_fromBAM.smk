@@ -31,14 +31,14 @@ onstart:
 # main workflow
 rule all:
     input:
-        expand("03_calls/{sample}_filt.bcf.csi", sample=config["samples"]) 
+        expand("{sample}_filt.bcf.csi", sample=config["samples"]) 
 
 
 rule bcftools_mpileup:
     input:
         ref = config["genome"],
-        bam = "{sample}.bam",
-        bai = "{sample}.bam.bai"
+        bam = bam_dir + "/{sample}.bam",
+        bai = bam_dir + "/{sample}.bam.bai"
     output:
         bcf_pil = "{sample}_pileup.bcf"
     params:
